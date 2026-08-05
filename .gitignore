@@ -20,3 +20,6 @@ data/silver/
 # Locally-built native deps (OpenFst/pynini) — platform-specific binaries,
 # rebuilt from source per-machine. See STEP_1A_RESULTS.md for build steps.
 vendor/
+
+# Local stand-in for the Drive results/cache root
+local_run/
