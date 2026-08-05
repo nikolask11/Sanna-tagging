@@ -11,7 +11,8 @@ SLOVAKBERT = "gerulata/slovakbert"
 
 CS_RAW = "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDT/master/"
 CS_TRAIN_PARTS = ["cs_pdtc-ud-train-lt.conllu", "cs_pdtc-ud-train-la.conllu",
-                  "cs_pdtc-ud-train-ca.conllu"]
+                  "cs_pdtc-ud-train-ca.conllu", "cs_pdtc-ud-train-wt0.conllu",
+                  "cs_pdtc-ud-train-wt1.conllu"]
 
 SPLIT_FILES = {
     "mt": {"train": ["mt_mudt-ud-train.conllu"],

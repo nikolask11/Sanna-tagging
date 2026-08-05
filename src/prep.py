@@ -33,7 +33,7 @@ def _prep_cs(dest):
         if not (dest / fname).exists():
             urllib.request.urlretrieve(CS_RAW + fname, dest / fname)
     n_train = len(load_split("train", base=dest))
-    if n_train < 50000:
+    if n_train < 90000:
         raise RuntimeError(f"cs train unexpectedly small: {n_train} sentences")
     return f"{n_train} train sentences"
 
