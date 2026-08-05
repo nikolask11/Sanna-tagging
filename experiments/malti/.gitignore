@@ -1,0 +1,7 @@
+.idea
+.DS_Store
+data/arabi_data/arabic_lm/
+data/malti_data/
+transliterations/
+trash
+__pycache__
