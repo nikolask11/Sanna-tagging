@@ -1,17 +1,36 @@
 import random
 from pathlib import Path
 
-from runpaths import data_dir
+from runpaths import STUDY, data_dir
 
-SPLIT_FILES = {
-    "train": "mt_mudt-ud-train.conllu",
-    "dev": "mt_mudt-ud-dev.conllu",
-    "test": "mt_mudt-ud-test.conllu",
-}
 SEED_SIZES = [50, 100, 200, 400, 800]
 RANDOM_SEEDS = [0, 1, 2]
 XLMR = "xlm-roberta-base"
 CAMELBERT = "CAMeL-Lab/bert-base-arabic-camelbert-mix"
+SLOVAKBERT = "gerulata/slovakbert"
+
+CS_RAW = "https://raw.githubusercontent.com/UniversalDependencies/UD_Czech-PDT/master/"
+CS_TRAIN_PARTS = ["cs_pdtc-ud-train-lt.conllu", "cs_pdtc-ud-train-la.conllu",
+                  "cs_pdtc-ud-train-ca.conllu"]
+
+SPLIT_FILES = {
+    "mt": {"train": ["mt_mudt-ud-train.conllu"],
+           "dev": ["mt_mudt-ud-dev.conllu"],
+           "test": ["mt_mudt-ud-test.conllu"]},
+    "cs": {"train": CS_TRAIN_PARTS,
+           "dev": ["cs_pdtc-ud-dev.conllu"],
+           "test": ["cs_pdtc-ud-test.conllu"]},
+}
+PRIMARY_MODEL = {"mt": XLMR, "cs": SLOVAKBERT}
+DEV_SUBSAMPLE = {"mt": None, "cs": 3000}
+SELFTRAIN_POOL_CAP = 10000
+
+_QUOTES = {"„": '"', "“": '"', "”": '"',
+           "‚": "'", "‘": "'", "’": "'"}
+
+
+def _norm(token):
+    return _QUOTES.get(token, token)
 
 
 def read_conllu(path):
@@ -27,7 +46,7 @@ def read_conllu(path):
         cols = line.split("\t")
         if "-" in cols[0] or "." in cols[0]:
             continue
-        toks.append(cols[1])
+        toks.append(_norm(cols[1]))
         tags.append(cols[3])
     if toks:
         sents.append({"tokens": toks, "upos": tags})
@@ -35,7 +54,15 @@ def read_conllu(path):
 
 
 def load_split(name, base=None):
-    return read_conllu((base or data_dir()) / SPLIT_FILES[name])
+    base = base or data_dir()
+    sents = []
+    for fname in SPLIT_FILES[STUDY][name]:
+        sents.extend(read_conllu(base / fname))
+    cap = DEV_SUBSAMPLE[STUDY]
+    if name == "dev" and cap and len(sents) > cap:
+        idx = sorted(random.Random(77).sample(range(len(sents)), cap))
+        sents = [sents[i] for i in idx]
+    return sents
 
 
 def label_list_from(sentences):
@@ -55,3 +82,10 @@ def seed_pool_split(train, seed_size, random_seed):
     gold = [train[i] for i in gold_idx]
     pool = [train[i] for i in pool_idx]
     return gold, pool, gold_idx, pool_idx
+
+
+def pool_subsample(pool, random_seed, cap=SELFTRAIN_POOL_CAP):
+    if len(pool) <= cap:
+        return pool
+    idx = sorted(random.Random(500 + random_seed).sample(range(len(pool)), cap))
+    return [pool[i] for i in idx]
