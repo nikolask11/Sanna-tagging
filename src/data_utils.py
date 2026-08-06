@@ -1,3 +1,4 @@
+import pickle
 import random
 from pathlib import Path
 
@@ -55,14 +56,27 @@ def read_conllu(path):
 
 
 def load_split(name, base=None):
-    base = base or data_dir()
+    from runpaths import cache_dir
+    pkl = cache_dir() / f"parsed_{name}.pkl"
+    if base is None and pkl.exists():
+        try:
+            with open(pkl, "rb") as f:
+                return pickle.load(f)
+        except Exception:
+            pass
+    src = base or data_dir()
     sents = []
     for fname in SPLIT_FILES[STUDY][name]:
-        sents.extend(read_conllu(base / fname))
+        sents.extend(read_conllu(src / fname))
     cap = DEV_SUBSAMPLE[STUDY]
     if name == "dev" and cap and len(sents) > cap:
         idx = sorted(random.Random(77).sample(range(len(sents)), cap))
         sents = [sents[i] for i in idx]
+    if base is None:
+        tmp = pkl.with_suffix(".tmp")
+        with open(tmp, "wb") as f:
+            pickle.dump(sents, f, protocol=4)
+        tmp.replace(pkl)
     return sents
 
 
