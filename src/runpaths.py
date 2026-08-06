@@ -14,7 +14,13 @@ def _suffix():
 
 def drive_root():
     mydrive = Path("/content/drive/MyDrive")
-    root = mydrive / "sanna_m1" if mydrive.exists() else REPO / "local_run"
+    kaggle = Path("/kaggle/working")
+    if mydrive.exists():
+        root = mydrive / "sanna_m1"
+    elif kaggle.exists():
+        root = kaggle / "sanna_m1"
+    else:
+        root = REPO / "local_run"
     for sub in (f"results{_suffix()}", f"cache{_suffix()}"):
         (root / sub).mkdir(parents=True, exist_ok=True)
     return root
