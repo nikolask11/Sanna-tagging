@@ -15,6 +15,10 @@ def append_row(path, fieldnames, row):
         w.writerow(row)
         f.flush()
         os.fsync(f.fileno())
+    # Mirror every result to stdout so numbers survive even if the filesystem
+    # is wiped (e.g. a Kaggle interactive session ending).
+    compact = {k: v for k, v in row.items() if k != "per_tag_f1_json"}
+    print(f"RESULT {path.name} {compact}", flush=True)
 
 
 def read_rows(path):
