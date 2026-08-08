@@ -5,6 +5,7 @@ from pathlib import Path
 
 
 NOTEBOOK = Path(__file__).resolve().parents[1] / "notebooks/cs_kaggle_all.ipynb"
+RUNTIME_COMMIT = "abb04f9a9f3f0d6c44fab13a0eba8c1ce4613579"
 PLACEHOLDER = "REPLACE_WITH_EXACT_V2_RUNTIME_COMMIT_SHA"
 
 
@@ -14,7 +15,8 @@ def test_kaggle_notebook_is_cleared_stage_oriented_cli_frontend():
     text = "\n".join(sources)
 
     assert notebook["nbformat"] == 4
-    assert text.count(PLACEHOLDER) >= 2
+    assert PLACEHOLDER not in text
+    assert text.count(RUNTIME_COMMIT) >= 2
     assert "checkout\", \"--detach" in text
     assert "requirements-kaggle.lock" in text
     assert '"-r"' in text
@@ -23,6 +25,8 @@ def test_kaggle_notebook_is_cleared_stage_oriented_cli_frontend():
     assert "/kaggle/working/sanna-v2" in text
     assert "/kaggle/input" in text and "PREVIOUS_RUN_DIR" in text
     assert "run.identity.json" in text and "sha256_file" in text
+    assert "pruning.manifest.json" in text and "authorized_pruned" in text
+    assert 'STAGE in {"budget", "adapt"}' in text and "torch.cuda.is_available()" in text
     assert "sanna_tagging.cli" in text
     assert "AUTHORIZE_FINAL_TEST is not True" in text
     for stage in ("prepare", "budget", "adapt", "report-draft", "finalize-test"):

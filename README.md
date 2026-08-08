@@ -81,14 +81,14 @@ it during development, CI, model selection, or draft reporting.
 
 ### Kaggle
 
-Open `notebooks/cs_kaggle_all.ipynb`, set Accelerator to GPU and Internet to On, replace the
-exact detached-commit placeholder, choose one `STAGE`, and use
+Open `notebooks/cs_kaggle_all.ipynb`, set Accelerator to GPU and Internet to On, keep its
+pinned runtime commit unchanged, choose one `STAGE`, and use
 **Save Version → Save & Run All (Commit)**. Do not rely on an interactive session: Kaggle
 removes `/kaggle/working` when it ends. Each committed stage leaves a portable run under
-`/kaggle/working/sanna-v2/runs`; add that committed output as a read-only input to the next
-version and set `PREVIOUS_RUN_DIR` to the prior fingerprint directory. The notebook verifies
-the fingerprint and all committed output hashes before copying the run into the new writable
-working directory.
+`/kaggle/working/sanna-v2/runs`; protected raw test gold is cached ephemerally outside that
+output. Add the committed run as a read-only input to the next version and set
+`PREVIOUS_RUN_DIR` to the prior fingerprint directory. The notebook verifies the fingerprint,
+pruning authorization, and retained output hashes before copying the run.
 
 ## Legacy v1 and Maltese history
 
@@ -114,7 +114,7 @@ NLTK_DISABLE_IMPORT_SECURITY=1 .venv/bin/python scripts/run_step1a.py
 ```text
 configs/cs_kaggle_v2.yaml    frozen v2 experiment contract
 src/sanna_tagging/           v2 package: data, training, adaptation, selection, reporting, CLI
-requirements-kaggle.lock     exact top-level Kaggle dependency pins
+requirements-kaggle.lock     fully resolved Kaggle Linux/Python 3.11 dependency pins
 tests/                       offline unit and mocked end-to-end v2 tests
 docs/RUNBOOK.md              operational stage and resume procedure
 docs/RESULTS_SCHEMA.md       manifests, handoffs, locks, and result record schema

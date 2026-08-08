@@ -19,7 +19,7 @@ notebooks use a different CSV resume format and are not inputs to this procedure
 
 ## Prerequisites
 
-- Python 3.10–3.12.
+- Python 3.11 for the resolved Kaggle environment (the package supports 3.10–3.12).
 - A GPU runtime for production training.
 - Internet access for the initial pinned corpus/model acquisition.
 - Enough persistent space for 30 compute jobs and their sealed checkpoints.
@@ -32,9 +32,9 @@ python -m pip install -r requirements-kaggle.lock
 python -m pip install --no-deps -e .
 ```
 
-`requirements-kaggle.lock` contains exact top-level runtime pins, not a hash-locked transitive
-resolution. Its exact bytes are nevertheless part of the run fingerprint and are snapshotted
-under `plan/`.
+`requirements-kaggle.lock` is a fully resolved set of exact Kaggle Linux/CPython 3.11
+runtime versions. Its exact bytes are part of the run fingerprint and are snapshotted under
+`plan/`; package hashes are not embedded, so retain the committed lock and pip index provenance.
 
 Choose one artifact root and use it for every local stage:
 
