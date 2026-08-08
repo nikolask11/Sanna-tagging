@@ -2,7 +2,7 @@
 
 _Running decision log. Append a dated line whenever a choice is made or changed, with who made it and one sentence of why. This doubles as the backbone of the paper's methodology section._
 
-_Last updated: 2026-08-01 · Maintained by Nikolas_
+_Last updated: 2026-08-08 · Maintained by Nikolas_
 
 ---
 
@@ -105,3 +105,62 @@ Still in play as a second validation angle: rehearses close dialect→standard t
 - Conneau et al. (2020). _Unsupervised Cross-lingual Representation Learning at Scale_ (XLM-R). ACL. arxiv.org/abs/1911.02116
 - Garrette & Baldridge (2013). _Learning a Part-of-Speech Tagger from Two Hours of Annotation._ NAACL. aclanthology.org/N13-1014
 - Maltese UD treebank (MUDT): universaldependencies.org/treebanks/mt_mudt · UPOS guidelines: universaldependencies.org/u/pos
+
+---
+
+## 7. Czech v2 rerun protocol (added 2026-08-08)
+
+The Czech v2 study is a reproducibility and evaluation-protocol redesign of the Czech proxy
+experiment. It does **not** supersede D1–D21, the Maltese selective-transliteration ladder,
+`STEP_1A_RESULTS.md`, or the parked Sanna-side etymology problem. The legacy flat-module v1
+workflow remains available as historical evidence; v2 is isolated in the `sanna_tagging`
+package and uses a different artifact format.
+
+- **D22. Immutable inputs.** Pin UD Czech PDT-C and UD Slovak SNK to full repository commits,
+  pin every configured CoNLL-U file by SHA-256, pin SlovakBERT and XLM-R to full model
+  revisions, and bind the canonical YAML, exact runtime Git commit, and dependency-lock hash
+  into one run fingerprint. A real run must use committed code; uncommitted v2 code cannot be
+  represented by the recorded Git identity.
+- **D23. Leakage-safe data precedence.** Define sentence identity as the SHA-256 of the exact
+  ordered FORM sequence. Preserve official Czech test order, remove test duplicates from dev
+  and train, then remove retained dev duplicates from train. Ordinary preparation may parse
+  test IDs and FORM only and may never serialize UPOS.
+- **D24. Fixed development roles.** Deterministically cap Czech dev at 3,000 sentences and
+  partition it once as 80% selection, 10% calibration fit, and 10% calibration assessment.
+  Selection and early stopping use only `selection`; token temperature and the sentence
+  success model fit only on `calibration_fit`; `calibration_assessment` reports held-out
+  calibration and cannot change the model or threshold policy.
+- **D25. Fixed budget design.** Evaluate 50, 100, 200, 400, and 800 nested Czech gold
+  sentences with seeds 0, 1, and 2. Every configuration uses complete overflow-safe word
+  alignment, sentence-balanced training loss, and best-checkpoint restoration. Select the
+  smallest budget within 0.01 mean sentence-≥98 rate and 0.005 mean token accuracy of the
+  best three-seed budget.
+- **D26. Predeclared model arms.** Compare direct SlovakBERT, an XLM-R reference, Czech LAPT,
+  Slovak UPOS transfer, and Czech-LAPT-plus-Slovak-transfer. Czech LAPT receives cleaned Czech
+  training FORM only and uses an internal training-only holdout. Slovak transfer uses Slovak
+  train/dev only. Each transition to Czech supervised refinement constructs a fresh optimizer
+  and scheduler; optimizer state never crosses adaptation boundaries.
+- **D27. Adaptation non-inferiority and ranking.** Reject an adapted arm when its mean Czech
+  selection token accuracy is more than 0.002 below direct SlovakBERT. Rank remaining arms by
+  mean sentence-≥98 rate, token accuracy, exact match, lower adaptation complexity, then
+  stable arm name. This deterministic policy is fixed before test access.
+- **D28. Three-seed ensemble.** Freeze all three checkpoints for the winning arm and ensemble
+  by an unweighted arithmetic mean of aligned word-probability vectors. Do not select a
+  single lucky seed and do not learn ensemble weights on test data.
+- **D29. Sentence-level calibration target.** Fit one token temperature and an L2 logistic
+  sentence-success predictor using length, expected errors, low-confidence fraction, minimum
+  confidence, and ensemble disagreement. Define sentence success literally as
+  `100 * correct >= 98 * token_count`; report risk–coverage and accepted high-quality yield at
+  the fixed 1%, 2%, and 5% predicted failure-risk thresholds.
+- **D30. Manifest-only resume.** A stage is resumable only from a final commit manifest whose
+  fingerprint, inputs, parameters, output paths, sizes, and SHA-256 values match. Partial or
+  altered state fails closed. Stage handoff paths are relative to the fingerprinted run so a
+  committed Kaggle output can be verified read-only and copied to a new writable session.
+- **D31. Frozen draft before official test.** `report-draft` has no test-gold parameter and
+  freezes the selected budget, winning arm, three checkpoint manifests and hashes, ensemble,
+  calibration, and selection evidence in `selection.lock.json`. Optional throughput
+  benchmarking is non-selective and cannot affect that lock.
+- **D32. Explicit one-shot finalization.** Official test evaluation requires the exact lock
+  committed by the matching draft and the configured pinned test bytes. Seal an attempt
+  marker before opening gold; any success or failure consumes the run. CI, development,
+  notebook default execution, and draft reporting must never invoke this stage.
