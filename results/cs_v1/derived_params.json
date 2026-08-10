@@ -1,0 +1,16 @@
+{
+  "chosen_seed_size": 400,
+  "model": "gerulata/slovakbert",
+  "per_size": {
+    "200": {
+      "tau_98": 0.98,
+      "coverage_at_tau_98": 0.6686
+    },
+    "400": {
+      "tau_98": 0.95,
+      "coverage_at_tau_98": 0.9141
+    }
+  },
+  "tau_98": 0.95,
+  "coverage_at_tau_98": 0.9141
+}
