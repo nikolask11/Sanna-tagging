@@ -1,0 +1,38 @@
+{
+  "run": {
+    "name": "cs-rerun-v2",
+    "fingerprint": "30a9fbaa373488ecfeec",
+    "code_commit": "abb04f9a9f3f0d6c44fab13a0eba8c1ce4613579",
+    "config": "configs/cs_kaggle_v2.yaml",
+    "kaggle_script_version_id": 341764921,
+    "wall_clock_seconds": 1114.8
+  },
+  "selection": {
+    "budget": 800,
+    "arm": "slovakbert-czech-lapt-slovak-upos",
+    "ensemble": "unweighted-arithmetic-mean-probabilities",
+    "checkpoint_sha256": {
+      "seed_0": "a9b36a34f6ead22852b776f541e639e70da9be0a16360993db361debc01d5388",
+      "seed_1": "0b644e2c8d422828b5e91783d6fa5bd1bdb46c732d3bb1140f904b5e191bcdcc",
+      "seed_2": "14c6f345c4db6ea6f2b4bdcdcb91fae314e903e5049da95ab3d381c130fd6202"
+    }
+  },
+  "official_test": {
+    "file": "cs_pdtc-ud-test.conllu",
+    "bytes": 39742361,
+    "sha256": "f5c1a7ee2575e7e42fbedf958f2d2f55af51d60a8c770643a514e627f04fa97a",
+    "sentence_count": 20187
+  },
+  "per_seed": {
+    "seed_0": {"token_accuracy": 0.977175, "sentence_ge_98": 0.735771, "exact_match": 0.733145},
+    "seed_1": {"token_accuracy": 0.977447, "sentence_ge_98": 0.738396, "exact_match": 0.736365},
+    "seed_2": {"token_accuracy": 0.976937, "sentence_ge_98": 0.735077, "exact_match": 0.732600}
+  },
+  "ensemble": {
+    "token_accuracy": 0.978944,
+    "sentence_ge_98": 0.754644,
+    "exact_match": 0.751771,
+    "brier_score": 0.13878490193313373,
+    "log_loss": 0.4289893703376134
+  }
+}
