@@ -1,0 +1,5 @@
+{
+  "chosen_seed_size": 800,
+  "tau_98": 0.99,
+  "coverage_at_tau_98": 0.6353
+}

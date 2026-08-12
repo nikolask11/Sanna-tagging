@@ -13,9 +13,10 @@ checkpoints/
 *.safetensors
 *.bin
 
-# Experiment outputs are small JSONL — keep them; ignore bulky artefacts.
+# Experiment outputs are small JSONL — keep legacy fixtures; ignore bulky artefacts.
 experiments/**/*.pt
 data/silver/
+runs/
 
 # Locally-built native deps (OpenFst/pynini) — platform-specific binaries,
 # rebuilt from source per-machine. See STEP_1A_RESULTS.md for build steps.

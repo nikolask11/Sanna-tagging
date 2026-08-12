@@ -1,0 +1,29 @@
+{
+  "config": {
+    "model": "xlm-roberta-base",
+    "seed_size": 800,
+    "random_seed": 1,
+    "round": null,
+    "dev_acc": 0.9807
+  },
+  "test_upos_acc": 0.9759,
+  "per_tag_f1": {
+    "ADJ": 0.9829,
+    "ADP": 0.9953,
+    "ADV": 0.9046,
+    "AUX": 0.9971,
+    "CCONJ": 0.94,
+    "DET": 0.9785,
+    "INTJ": 0.0,
+    "NOUN": 0.9845,
+    "NUM": 0.9843,
+    "PART": 0.7708,
+    "PRON": 0.9846,
+    "PROPN": 0.9409,
+    "PUNCT": 0.9991,
+    "SCONJ": 0.9759,
+    "SYM": 0.8727,
+    "VERB": 0.9948,
+    "X": 0.8972
+  }
+}

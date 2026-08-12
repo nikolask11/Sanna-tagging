@@ -2,7 +2,7 @@
 
 _Running decision log. Append a dated line whenever a choice is made or changed, with who made it and one sentence of why. This doubles as the backbone of the paper's methodology section._
 
-_Last updated: 2026-08-01 · Maintained by Nikolas_
+_Last updated: 2026-08-12 · Maintained by Nikolas_
 
 ---
 
@@ -105,3 +105,119 @@ Still in play as a second validation angle: rehearses close dialect→standard t
 - Conneau et al. (2020). _Unsupervised Cross-lingual Representation Learning at Scale_ (XLM-R). ACL. arxiv.org/abs/1911.02116
 - Garrette & Baldridge (2013). _Learning a Part-of-Speech Tagger from Two Hours of Annotation._ NAACL. aclanthology.org/N13-1014
 - Maltese UD treebank (MUDT): universaldependencies.org/treebanks/mt_mudt · UPOS guidelines: universaldependencies.org/u/pos
+
+---
+
+## 7. Czech v2 rerun protocol (added 2026-08-08)
+
+The Czech v2 study is a reproducibility and evaluation-protocol redesign of the Czech proxy
+experiment. It does **not** supersede D1–D21, the Maltese selective-transliteration ladder,
+`STEP_1A_RESULTS.md`, or the parked Sanna-side etymology problem. The legacy flat-module v1
+workflow remains available as historical evidence; v2 is isolated in the `sanna_tagging`
+package and uses a different artifact format.
+
+- **D22. Immutable inputs.** Pin UD Czech PDT-C and UD Slovak SNK to full repository commits,
+  pin every configured CoNLL-U file by SHA-256, pin SlovakBERT and XLM-R to full model
+  revisions, and bind the canonical YAML, exact runtime Git commit, and dependency-lock hash
+  into one run fingerprint. A real run must use committed code; uncommitted v2 code cannot be
+  represented by the recorded Git identity.
+- **D23. Leakage-safe data precedence.** Define sentence identity as the SHA-256 of the exact
+  ordered FORM sequence. Preserve official Czech test order, remove test duplicates from dev
+  and train, then remove retained dev duplicates from train. Ordinary preparation may parse
+  test IDs and FORM only and may never serialize UPOS.
+- **D24. Fixed development roles.** Deterministically cap Czech dev at 3,000 sentences and
+  partition it once as 80% selection, 10% calibration fit, and 10% calibration assessment.
+  Selection and early stopping use only `selection`; token temperature and the sentence
+  success model fit only on `calibration_fit`; `calibration_assessment` reports held-out
+  calibration and cannot change the model or threshold policy.
+- **D25. Fixed budget design.** Evaluate 50, 100, 200, 400, and 800 nested Czech gold
+  sentences with seeds 0, 1, and 2. Every configuration uses complete overflow-safe word
+  alignment, sentence-balanced training loss, and best-checkpoint restoration. Select the
+  smallest budget within 0.01 mean sentence-≥98 rate and 0.005 mean token accuracy of the
+  best three-seed budget.
+- **D26. Predeclared model arms.** Compare direct SlovakBERT, an XLM-R reference, Czech LAPT,
+  Slovak UPOS transfer, and Czech-LAPT-plus-Slovak-transfer. Czech LAPT receives cleaned Czech
+  training FORM only and uses an internal training-only holdout. Slovak transfer uses Slovak
+  train/dev only. Each transition to Czech supervised refinement constructs a fresh optimizer
+  and scheduler; optimizer state never crosses adaptation boundaries.
+- **D27. Adaptation non-inferiority and ranking.** Reject an adapted arm when its mean Czech
+  selection token accuracy is more than 0.002 below direct SlovakBERT. Rank remaining arms by
+  mean sentence-≥98 rate, token accuracy, exact match, lower adaptation complexity, then
+  stable arm name. This deterministic policy is fixed before test access.
+- **D28. Three-seed ensemble.** Freeze all three checkpoints for the winning arm and ensemble
+  by an unweighted arithmetic mean of aligned word-probability vectors. Do not select a
+  single lucky seed and do not learn ensemble weights on test data.
+- **D29. Sentence-level calibration target.** Fit one token temperature and an L2 logistic
+  sentence-success predictor using length, expected errors, low-confidence fraction, minimum
+  confidence, and ensemble disagreement. Define sentence success literally as
+  `100 * correct >= 98 * token_count`; report risk–coverage and accepted high-quality yield at
+  the fixed 1%, 2%, and 5% predicted failure-risk thresholds.
+- **D30. Manifest-only resume.** A stage is resumable only from a final commit manifest whose
+  fingerprint, inputs, parameters, output paths, sizes, and SHA-256 values match. Partial or
+  altered state fails closed. Stage handoff paths are relative to the fingerprinted run so a
+  committed Kaggle output can be verified read-only and copied to a new writable session.
+- **D31. Frozen draft before official test.** `report-draft` has no test-gold parameter and
+  freezes the selected budget, winning arm, three checkpoint manifests and hashes, ensemble,
+  calibration, and selection evidence in `selection.lock.json`. Optional throughput
+  benchmarking is non-selective and cannot affect that lock.
+- **D32. Explicit one-shot finalization.** Official test evaluation requires the exact lock
+  committed by the matching draft and the configured pinned test bytes. Seal an attempt
+  marker before opening gold; any success or failure consumes the run. CI, development,
+  notebook default execution, and draft reporting must never invoke this stage.
+
+---
+
+## 8. Czech v2 execution record (added 2026-08-12)
+
+The protocol in section 7 has now been executed end to end on Kaggle. **Run `cs-rerun-v2`,
+fingerprint `30a9fbaa373488ecfeec`, code commit `abb04f9`.** The one-shot finalization of
+D32 is therefore **consumed for this fingerprint**; nothing in this run may be re-finalized.
+Artefacts: [results/cs_v2/](results/cs_v2/).
+
+**Outcome.** Selected budget 800; winning arm `slovakbert-czech-lapt-slovak-upos`; frozen
+three-seed unweighted ensemble on the 20,187-sentence official PDT-C test set:
+
+| System | Token accuracy | Sentence ≥98% | Exact match |
+|---|---:|---:|---:|
+| Seeds 0/1/2 | 0.977175 / 0.977447 / 0.976937 | 0.735771 / 0.738396 / 0.735077 | 0.733145 / 0.736365 / 0.732600 |
+| Ensemble | 0.978944 | 0.754644 | 0.751771 |
+
+The predeclared ranking policy of D27 selected a *smaller* base model (SlovakBERT) over the
+XLM-R reference arm, and it beats Czech v1's 0.9759 token accuracy — roughly 12.5% of v1's
+remaining token error removed. Every individual seed already clears v1, so the gain is not
+ensemble luck. `adapt` cost 5 h 01 m of the 12 h Kaggle commit ceiling; `report-draft` 238.5 s;
+`finalize-test` 1114.8 s on GPU T4 x2 (no training — inference, ensembling, and the frozen
+calibration bundle only).
+
+- **D33. Cross-version comparisons are made on token accuracy, never on coverage.** v1
+  reported *token-level* coverage; v2 defines success *per sentence* as
+  `100 * correct >= 98 * token_count` (D29). A v2 coverage figure that looks worse than v1's
+  is a change of yardstick, not a regression. Only token accuracy is comparable across the
+  two protocols, and any write-up must say which yardstick it is quoting.
+- **D34. Verify the gold hash before the attempt marker, not after.** `finalize_official_test`
+  seals the marker before it checksums gold (D32), so dispatching the wrong file spends the
+  single attempt on a file that was never eligible. The Kaggle frontend therefore verifies
+  the official CoNLL-U against `config.data.czech.test[0].sha256` *before* dispatch, while
+  aborting is still free. Confirmed on this run: 39,742,361 bytes, SHA-256 `f5c1a7ee…`,
+  byte-identical to the pinned value.
+- **D35. Recover the gold path by filename when the platform mounts it elsewhere, but never
+  from resumed run state.** Kaggle mounts plain datasets at
+  `/kaggle/input/datasets/<user>/<slug>/<file>`, not the documented `/kaggle/input/<slug>/<file>`,
+  so a correctly declared `OFFICIAL_TEST_PATH` can still miss (it did — v6 died on
+  `FileNotFoundError`). Recovery searches `/kaggle/input` by filename, excludes the
+  `notebooks/` subtree because a `.conllu` under there is resumed run state rather than gold,
+  requires exactly one match, and then still passes through the D34 hash check.
+- **D36. Trim the runtime image; never widen the lock to accommodate it.** Kaggle preinstalls
+  torchvision/torchaudio built against a newer torch than `requirements-kaggle.lock` pins,
+  which breaks `import transformers`. Neither package is used, so the frontend uninstalls
+  them and asserts they are gone. Relaxing the lock would change its SHA-256 and therefore
+  the run fingerprint (D22) — the lock stays authoritative and the environment is corrected
+  to match it. Notebook content is deliberately outside the fingerprint, so frontend fixes
+  like this and D35 are fingerprint-neutral and do not invalidate a run.
+- **D37. Known limitation, deferred to v3: the low-risk tail of the calibration is
+  over-conservative.** At a 1% risk budget the mean predicted failure risk is 4.95% against
+  an empirical 0.94%, so the D29 fixed thresholds accept **0 sentences at 1% and 2%** and only
+  266 (1.3% coverage) at 5%. The risk–coverage curve itself is well-behaved and the ranking is
+  unaffected — the sentence-success model is simply miscalibrated where it matters most for
+  the human-in-the-loop routing of D7. This must be fixed by a **new fingerprint**, not by
+  re-finalizing `cs-rerun-v2`.

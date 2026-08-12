@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  HF_HUB_OFFLINE: "1"
+  TRANSFORMERS_OFFLINE: "1"
+  HF_DATASETS_OFFLINE: "1"
+  TOKENIZERS_PARALLELISM: "false"
+  WANDB_DISABLED: "true"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            requirements-kaggle.lock
+            pyproject.toml
+
+      - name: Install pinned runtime and test dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -r requirements-kaggle.lock
+          python -m pip install --disable-pip-version-check -e '.[test]'
+
+      - name: Lint v2 package and tests
+        run: ruff check src/sanna_tagging tests
+
+      - name: Run offline tests
+        run: python -m pytest
+
+      - name: Compile Python sources
+        run: python -m compileall -q src scripts tests
+
+      - name: Validate Kaggle notebook JSON and cleared outputs
+        run: |
+          python -m json.tool notebooks/cs_kaggle_all.ipynb >/dev/null
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("notebooks/cs_kaggle_all.ipynb")
+          notebook = json.loads(path.read_text(encoding="utf-8"))
+          assert notebook["nbformat"] == 4
+          for cell in notebook["cells"]:
+              if cell["cell_type"] == "code":
+                  assert cell.get("execution_count") is None
+                  assert cell.get("outputs") == []
+          PY

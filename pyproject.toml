@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools==75.8.0", "wheel==0.45.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sanna-tagging"
+version = "2.0.0"
+description = "Reproducible Czech proxy experiments for Sanna UPOS tagging"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+license = { file = "LICENSE" }
+authors = [{ name = "Nikolas Kallweit" }]
+dependencies = [
+    "PyYAML==6.0.2",
+]
+
+[project.scripts]
+sanna-tagging = "sanna_tagging.cli:main"
+
+[project.optional-dependencies]
+kaggle = [
+    "numpy==2.0.2",
+    "scikit-learn==1.6.1",
+    "torch==2.6.0",
+    "transformers==4.48.3",
+]
+test = [
+    "pytest==8.3.5",
+    "ruff==0.9.10",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["sanna_tagging*"]
+
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers -ra"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]

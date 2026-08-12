@@ -1,0 +1,88 @@
+schema_version: 2
+run_name: cs-rerun-v2
+seed_sizes: [50, 100, 200, 400, 800]
+random_seeds: [0, 1, 2]
+upos_tags: [ADJ, ADP, ADV, AUX, CCONJ, DET, INTJ, NOUN, NUM, PART, PRON, PROPN, PUNCT, SCONJ, SYM, VERB, X]
+
+data:
+  release: r2.17
+  dev_cap: 3000
+  dev_sample_seed: 77
+  dev_partition_seed: 91
+  dev_partitions:
+    selection: 0.8
+    calibration_fit: 0.1
+    calibration_assessment: 0.1
+  czech:
+    repository: UD_Czech-PDTC
+    revision: d24709eac1f77cf5eef9e807080270955cba9e00
+    train:
+      - {name: cs_pdtc-ud-train-lt.conllu, sha256: f1d7543bfaf3c2427f561d9a1db2118cf19eb09f36f603bb5db6576d85262210}
+      - {name: cs_pdtc-ud-train-la.conllu, sha256: b2683cba24c059d30505dc5678d20581ff0bf1d4b73508b1b33e163c6812a2f7}
+      - {name: cs_pdtc-ud-train-ca.conllu, sha256: e34b6ae9d94e0d7899a1400ce19d69eb4fefbc8ca6690ec516c56b2f12469018}
+      - {name: cs_pdtc-ud-train-wt0.conllu, sha256: 9fd4d6595e3b4fe682e2087eff98d3050736bf65be5cee52134eca03481a74d6}
+      - {name: cs_pdtc-ud-train-wt1.conllu, sha256: 06eafaf05a34118953eb6a504b130e0ee9dd897f1a067b8eaca64d546c2ce657}
+    dev:
+      - {name: cs_pdtc-ud-dev.conllu, sha256: 73a19117ff39411b1134840c3a0383a37f5dd89a2e07b3f8c0a8821d8d37d4bc}
+    test:
+      - {name: cs_pdtc-ud-test.conllu, sha256: f5c1a7ee2575e7e42fbedf958f2d2f55af51d60a8c770643a514e627f04fa97a}
+  slovak:
+    repository: UD_Slovak-SNK
+    revision: c3dd2f1db5f9736ccfab85c7c68357111259060e
+    train:
+      - {name: sk_snk-ud-train.conllu, sha256: 086b3ec1b48bc5942ac42ae274d9a26a75633152b1d444c649369aa4faa5d825}
+    dev:
+      - {name: sk_snk-ud-dev.conllu, sha256: 5660577846d500db86ab139618518d106e0191a100155ee4e7d37254d6036819}
+
+models:
+  slovakbert:
+    id: gerulata/slovakbert
+    revision: 629d4e16f546fad0054b5143fe13ccbea03259e2
+    add_prefix_space: true
+  xlmr:
+    id: FacebookAI/xlm-roberta-base
+    revision: e73636d4f797dec63c3081bb6ed5c7b0bb3f2089
+    add_prefix_space: true
+
+training:
+  max_length: 256
+  stride: 64
+  batch_size: 16
+  effective_batch_size: 32
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.10
+  min_epochs: 3
+  max_epochs: 15
+  patience: 3
+  gradient_clip: 1.0
+
+lapt:
+  max_updates: 2000
+  eval_every: 100
+  holdout_sentences: 1000
+  holdout_seed: 173
+  masking_probability: 0.15
+  batch_size: 16
+  effective_batch_size: 64
+  learning_rate: 5.0e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.10
+
+transfer:
+  updates: 750
+  batch_size: 16
+  effective_batch_size: 32
+  learning_rate: 2.0e-5
+  weight_decay: 0.01
+  warmup_ratio: 0.10
+  seed: 404
+
+selection:
+  budget_sentence_tolerance: 0.01
+  budget_token_tolerance: 0.005
+  adaptation_token_noninferiority: 0.002
+
+calibration:
+  logistic_c: 1.0
+  fixed_failure_risks: [0.01, 0.02, 0.05]
