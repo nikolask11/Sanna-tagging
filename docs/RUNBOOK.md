@@ -200,6 +200,34 @@ Before copying prior state, the notebook:
 
 The source under `/kaggle/input` remains read-only. Never point `--runs-root` at it.
 
+### Kaggle image quirks
+
+Both are handled inside the notebook, not by the lock or the configuration. Notebook content
+is deliberately outside the run fingerprint, so these fixes are fingerprint-neutral; editing
+`requirements-kaggle.lock` or the YAML instead would produce a different run.
+
+- **Preinstalled torchvision/torchaudio.** Kaggle ships them built against a newer torch than
+  the lock pins, so `import transformers` fails with
+  `operator torchvision::nms does not exist`. Neither is used here. The notebook uninstalls
+  both and then asserts they are unimportable. Do not widen the lock to accommodate them.
+- **Dataset mount paths.** Plain datasets mount at
+  `/kaggle/input/datasets/<user>/<slug>/<file>`, not the documented
+  `/kaggle/input/<slug>/<file>`; notebook-output inputs mount at
+  `/kaggle/input/notebooks/<user>/<notebook-slug>/<subdir>`. A `PREVIOUS_RUN_DIR` or
+  `OFFICIAL_TEST_PATH` can therefore be right on paper and still miss. For gold, the notebook
+  recovers by filename under `/kaggle/input`, excluding the `notebooks/` subtree — a `.conllu`
+  under there is resumed run state, not gold — and requires exactly one match.
+
+### Reading the output of a committed version
+
+The Kaggle log page **renumbers its retained window from 1**, so a log showing lines 1..N with
+no gaps can still be a tail-only view of a much longer run. Do not treat log line numbering as
+evidence of completeness; confirm by content. The authoritative full stdout of a committed
+version is the executed notebook JSON, including outputs, at
+`/kernels/scriptcontent/<scriptVersionId>/download`. For run `cs-rerun-v2` this was 141,382
+lines against the log page's retained 30,822. The public output API, the internal session-log
+endpoints, and the Output file browser all failed for a 1.86 GB output.
+
 ## Resume and recovery
 
 A normal rerun of a completed stage is safe: `strict_resume` verifies identity and all recorded
@@ -229,7 +257,19 @@ This section documents the gate; routine operation and CI stop before it.
 - `selection.lock.json` path is the exact file committed under this run's `report/` directory.
 - One-shot access explicitly authorized and scheduled once.
 - No `final/` directory exists.
+- **The resolved gold path has been hashed and compared to
+  `config.data.czech.test[0].sha256` before dispatch.** The attempt marker is sealed before
+  `finalize_official_test` checksums gold, so an unverified dispatch spends the single attempt
+  on a file that was never eligible. Verify while aborting is still free.
 
 Only then construct the explicit command shown by `sanna-tagging finalize-test --help`. The
 attempt marker is written before the official gold checksum and parser run. There is no retry
 or selection change after that marker.
+
+### Consumed attempts
+
+| Run | Fingerprint | Status |
+|---|---|---|
+| `cs-rerun-v2` | `30a9fbaa373488ecfeec` | finalized 2026-08-12 — attempt consumed, see [results/cs_v2/](../results/cs_v2/) |
+
+Any correction to a finalized run — including recalibration — requires a new fingerprint.

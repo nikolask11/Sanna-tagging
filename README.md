@@ -21,7 +21,7 @@ The full rationale and locked Sanna/Maltese decisions remain in [DECISIONS.md](D
 |---|---|
 | Maltese Step 1a selective-transliteration preprocessing | complete — [STEP_1A_RESULTS.md](STEP_1A_RESULTS.md) |
 | Legacy v1 Maltese/Czech budget, calibration, and self-training notebooks | retained for history |
-| Czech v2 reproducible rerun | implementation and offline test suite complete; production run pending |
+| Czech v2 reproducible rerun | complete — official test finalized once, [results/cs_v2/](results/cs_v2/) |
 | Sanna etymology heuristic and scaled annotation | parked until proxy evidence is complete |
 
 ## v2 Czech rerun
@@ -39,6 +39,25 @@ CSV state. Its fixed compute plan has 30 jobs:
 The run fingerprint binds the canonical configuration, exact Git commit, and SHA-256 of
 `requirements-kaggle.lock`. Every stage commits checksummed manifests. Resume succeeds only
 when the fingerprint, inputs, parameters, outputs, sizes, and hashes match exactly.
+
+### Result
+
+Run `cs-rerun-v2`, fingerprint `30a9fbaa373488ecfeec`, finalized once against the
+20,187-sentence official PDT-C test set. Selected budget 800; winning arm
+`slovakbert-czech-lapt-slovak-upos`; frozen unweighted three-seed ensemble:
+
+| Metric | Ensemble |
+|---|---:|
+| Token accuracy | 0.978944 |
+| Sentence ≥98% | 0.754644 |
+| Exact match | 0.751771 |
+
+The predeclared ranking policy chose the smaller SlovakBERT base over the XLM-R reference arm,
+and the result beats Czech v1's 0.9759 token accuracy with every individual seed also clearing
+v1. Coverage figures are **not** comparable to v1: v1 measured coverage per token, v2 measures
+it per sentence at a ≥98%-correct bar. Full artefacts, provenance, and the known calibration
+limitation are in [results/cs_v2/](results/cs_v2/) and section 8 of
+[DECISIONS.md](DECISIONS.md).
 
 ### Local CLI
 
@@ -89,6 +108,12 @@ removes `/kaggle/working` when it ends. Each committed stage leaves a portable r
 output. Add the committed run as a read-only input to the next version and set
 `PREVIOUS_RUN_DIR` to the prior fingerprint directory. The notebook verifies the fingerprint,
 pruning authorization, and retained output hashes before copying the run.
+
+Two quirks of the Kaggle image are handled by the notebook rather than by the lock or the
+config, because notebook content is outside the run fingerprint: preinstalled
+torchvision/torchaudio are uninstalled before `import transformers`, and a missing
+`OFFICIAL_TEST_PATH` is recovered by filename because plain datasets mount under
+`/kaggle/input/datasets/<user>/<slug>/`. See [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
 ## Legacy v1 and Maltese history
 
